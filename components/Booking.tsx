@@ -79,6 +79,8 @@ export default function Booking() {
       const params = new URLSearchParams(window.location.hash.split("?")[1]);
       const service = params.get("service");
       const barber = params.get("barber");
+      if (timer.current) clearTimeout(timer.current);
+      setErrors({});
       setStatus("idle");
       setValues((v) => ({
         ...v,
@@ -95,8 +97,14 @@ export default function Booking() {
     };
     readHash();
     window.addEventListener("hashchange", readHash);
+    const repeatSelection = (event: MouseEvent) => {
+      const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href^="#booking?"]') : null;
+      if (link && link.hash === window.location.hash) readHash();
+    };
+    document.addEventListener('click', repeatSelection);
     return () => {
       window.removeEventListener("hashchange", readHash);
+      document.removeEventListener('click', repeatSelection);
       if (timer.current) clearTimeout(timer.current);
     };
   }, []);
@@ -138,7 +146,7 @@ export default function Booking() {
       next.date = "Оберіть сьогоднішню або майбутню дату.";
     else if (new Date(`${values.date}T12:00:00`).getDay() === 0)
       next.date = "У неділю відпочиваємо. Оберіть інший день.";
-    if (!slots.includes(values.time)) next.time = "Оберіть доступний час.";
+    if (!getSlots(values.date, selected?.duration ?? 40).includes(values.time)) next.time = "Оберіть доступний час.";
     if (values.name.trim().length < 2) next.name = "Вкажіть ваше ім’я.";
     const phone = values.phone.replace(/\D/g, "");
     if (!/^(380\d{9}|0\d{9})$/.test(phone))
@@ -161,6 +169,7 @@ export default function Booking() {
     id: key,
     name: key,
     value: values[key],
+    disabled: status === 'submitting',
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       update(key, e.target.value),
     "aria-invalid": !!errors[key],

@@ -10,6 +10,12 @@ export default function Navbar() {
   const menu = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 901px)');
+    const closeOnDesktop = () => { if (desktop.matches) setOpen(false); };
+    desktop.addEventListener('change', closeOnDesktop);
+    return () => desktop.removeEventListener('change', closeOnDesktop);
+  }, []);
+  useEffect(() => {
     const update = () => setScrolled(window.scrollY > 30);
     update();
     window.addEventListener("scroll", update, { passive: true });
@@ -56,6 +62,7 @@ export default function Navbar() {
           href="#home"
           className="wordmark"
           aria-label="BLACKLINE — на головну"
+          onClick={() => setOpen(false)}
         >
           BLACKLINE<span>БАРБЕРШОП · КИЇВ</span>
         </a>
@@ -66,7 +73,7 @@ export default function Navbar() {
             </a>
           ))}
         </nav>
-        <a href="#booking" className="nav-cta">
+        <a href="#booking" className="nav-cta" onClick={() => setOpen(false)}>
           Записатися <ArrowUpRight size={16} />
         </a>
         <button
